@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import axios from 'axios';
 
 function App() {
@@ -44,10 +44,10 @@ function App() {
         console.log('Отправка запроса на сервер с URL:', url);
 
         try {
-            const response = await axios.post('http://65.21.232.203:3001/download', { url }, { responseType: 'blob' });
+            const response = await axios.post('http://localhost:3001/download', {url}, {responseType: 'blob'});
             console.log('Запрос успешно выполнен, создание файла для скачивания...');
 
-            const blob = new Blob([response.data], { type: 'application/zip' });
+            const blob = new Blob([response.data], {type: 'application/zip'});
             const link = document.createElement('a');
             link.href = window.URL.createObjectURL(blob);
             link.download = `${url.replace(/^https?:\/\//, '').split('.')[0]}.zip`;

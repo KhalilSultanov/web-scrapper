@@ -75,19 +75,25 @@ const copyHtaccessFile = (directory) => {
 };
 
 app.post('/download', async (req, res) => {
-    const {url} = req.body;
+    const { url } = req.body;
     console.log(`Запрос на скачивание получен для URL: ${url}`);
 
     const userAgent = req.headers['user-agent'] || '';
     console.log(`User-Agent: ${userAgent}`);
 
     const directoryName = createDirectoryName(url);
-    const directory = path.join(__dirname, directoryName);
+    const sitesDirectory = path.join(__dirname, 'sites');
+    const directory = path.join(sitesDirectory, directoryName);
 
     try {
+
+        if (!fs.existsSync(sitesDirectory)) {
+            fs.mkdirSync(sitesDirectory);
+        }
+
         if (fs.existsSync(directory)) {
             console.log(`Папка ${directory} уже существует. Удаление...`);
-            await rimrafAsync(directory, {glob: false});
+            await rimrafAsync(directory, { glob: false });
             console.log(`Папка ${directory} удалена.`);
         }
 
@@ -97,16 +103,15 @@ app.post('/download', async (req, res) => {
             directory: directory,
             recursive: false,
             sources: [
-                {selector: 'img', attr: 'src'},
-                {selector: 'link[rel="stylesheet"]', attr: 'href'},
-                {selector: 'script', attr: 'src'},
+                { selector: 'img', attr: 'src' },
+                { selector: 'link[rel="stylesheet"]', attr: 'href' },
+                { selector: 'script', attr: 'src' },
             ],
             urlFilter: function (scrapedUrl) {
                 return scrapedUrl.indexOf(url) === 0;
             },
         });
         console.log(`Сайт ${url} успешно скачан в папку ${directory}.`);
-
 
         console.log('Запрос от человека, вставляем скрипт...');
         const files = fs.readdirSync(directory);
@@ -126,7 +131,7 @@ app.post('/download', async (req, res) => {
         res.setHeader('Content-Disposition', `attachment; filename=${directoryName}.zip`);
         res.setHeader('Content-Type', 'application/zip');
 
-        const archive = archiver('zip', {zlib: {level: 9}});
+        const archive = archiver('zip', { zlib: { level: 9 } });
         archive.on('error', (err) => {
             console.error('Ошибка при создании архива:', err);
             throw err;
@@ -139,12 +144,12 @@ app.post('/download', async (req, res) => {
         console.log('Архив создан и отправлен клиенту.');
 
         // Удаляем папку после отправки архива
-        await rimrafAsync(directory, {glob: false});
+        await rimrafAsync(directory, { glob: false });
         console.log(`Папка ${directory} успешно удалена после отправки архива.`);
 
     } catch (error) {
         console.error('Ошибка при скачивании:', error.message);
-        res.status(500).json({message: `Ошибка при скачивании: ${error.message}`});
+        res.status(500).json({ message: `Ошибка при скачивании: ${error.message}` });
     }
 });
 
